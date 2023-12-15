@@ -35,7 +35,8 @@ def simulate():
 
         for t in range(MAX_T):
             action = select_action(state_0, explore_rate)
-            obv, reward, done, _ = env.step(action)
+            obv, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
             state = state_to_bucket(obv)
             env.remember(state_0, action, reward, state, done)
             total_reward += reward
@@ -89,7 +90,8 @@ def load_and_play():
         total_reward = 0
         for t in range(MAX_T):
             action = select_action(state_0, 0.01)
-            obv, reward, done, _ = env.step(action)
+            obv, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
             state = state_to_bucket(obv)
             total_reward += reward
             best_q = np.amax(q_table[state])

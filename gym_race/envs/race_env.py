@@ -4,11 +4,13 @@ import numpy as np
 from gym_race.envs.pyrace_2d import PyRace2D
 
 class RaceEnv(gym.Env):
+    """ The class defines a custom environment class named
+      RaceEnv that follows the OpenAI Gym interface. """
     metadata = {'render.modes' : ['human']}
     def __init__(self):
         print("init")
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Box(np.array([0, 0, 0, 0, 0]), np.array([10, 10, 10, 10, 10]), dtype=np.int)
+        self.observation_space = spaces.Box(np.array([0, 0, 0, 0, 0]), np.array([10, 10, 10, 10, 10]), dtype=int)
         self.is_view = True
         self.pyrace = PyRace2D(self.is_view)
         self.memory = []
@@ -22,9 +24,10 @@ class RaceEnv(gym.Env):
     def step(self, action):
         self.pyrace.action(action)
         reward = self.pyrace.evaluate()
-        done = self.pyrace.is_done()
+        terminated = self.pyrace.is_done()
+        truncated = self.pyrace.is_done()
         obs = self.pyrace.observe()
-        return obs, reward, done, {}
+        return obs, reward, terminated, truncated, {}
 
     def render(self, mode="human", close=False):
         if self.is_view:

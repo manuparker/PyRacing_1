@@ -6,6 +6,9 @@ screen_height = 800
 check_point = ((1200, 660), (1250, 120), (190, 200), (1030, 270), (250, 475), (650, 690))
 
 class Car:
+    """ This class represents a car within a 2D environment.  """
+    """The class includes various attributes and methods for managing 
+      the car's state, collision detection, and radar-based perception."""
     def __init__(self, car_file, map_file, pos):
         self.surface = pygame.image.load(car_file)
         self.map = pygame.image.load(map_file)
@@ -130,6 +133,9 @@ class Car:
         self.four_points = [left_top, right_top, left_bottom, right_bottom]
 
 class PyRace2D:
+    """ This class represents the environment of the racing car.  """
+    """ Its main functions are to execute actions, evaluate states, check 
+      if the game has ended, and observe the current environmental state. """
     def __init__(self, is_render = True):
         pygame.init()
         self.screen = pygame.display.set_mode((screen_width, screen_height))
