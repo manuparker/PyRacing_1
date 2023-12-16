@@ -1,11 +1,9 @@
-import sys
 import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
 
 import gym
-import gym_race
 
 def simulate():
     learning_rate = get_learning_rate(0)
@@ -26,7 +24,7 @@ def simulate():
             env.save_memory('50000')
             break
 
-        obv = env.reset()
+        obv, _ = env.reset()
         state_0 = state_to_bucket(obv)
         total_reward = 0
 

@@ -2,6 +2,7 @@ import gym
 from gym import spaces
 import numpy as np
 from gym_race.envs.pyrace_2d import PyRace2D
+from typing import Optional
 
 class RaceEnv(gym.Env):
     """ The class defines a custom environment class named
@@ -15,11 +16,17 @@ class RaceEnv(gym.Env):
         self.pyrace = PyRace2D(self.is_view)
         self.memory = []
 
-    def reset(self):
+    def reset(
+            self,
+            *,
+            seed: Optional[int] = None,
+            options: Optional[dict] = None,
+    ):
+        super().reset(seed=seed)
         del self.pyrace
         self.pyrace = PyRace2D(self.is_view)
         obs = self.pyrace.observe()
-        return obs
+        return obs, {}
 
     def step(self, action):
         self.pyrace.action(action)
