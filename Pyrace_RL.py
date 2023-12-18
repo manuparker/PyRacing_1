@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import gymnasium as gym
 import gym_race
 
+from stable_baselines3 import PPO
+
 def simulate():
     learning_rate = get_learning_rate(0)
     explore_rate = get_explore_rate(0)
@@ -210,6 +212,25 @@ def load_data(file):
     np.load = np_load_old
     return data
 
+def test_model(model):
+    env = gym.make("Pyrace-v0", render_mode="human")  # 可视化只能在初始化时指定
+    env.set_view(True)
+    obs, _ = env.reset()
+    done1, done2 = False, False
+    total_reward = 0
+    run_number = 100
+
+    for i in range(run_number):
+        while not (done1 or done2):
+            action, _states = model.predict(obs, deterministic=True)
+            obs, reward, done1, done2, info = env.step(action)
+
+            total_reward += reward
+
+    print(f"Total Reward: {total_reward}")
+    env.close()
+
+
 if __name__ == "__main__":
 
     env = gym.make("Pyrace-v0")
@@ -227,5 +248,12 @@ if __name__ == "__main__":
     #MAX_T = np.prod(NUM_BUCKETS, dtype=int) * 100
 
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
-    simulate()
+
+    model = PPO("MlpPolicy", env, verbose=1, device='cuda')  # 创建模型
+
+    model.learn(total_timesteps=2000000)  # 训练模型
+
+    model.save("ppo_1")
+
+    # simulate()
     #load_and_play()
