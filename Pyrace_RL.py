@@ -213,22 +213,22 @@ def load_data(file):
     return data
 
 def test_model(model):
-    env = gym.make("Pyrace-v0", render_mode="human")  # 可视化只能在初始化时指定
+    env = gym.make("Pyrace-v0")  # 可视化只能在初始化时指定
     env.set_view(True)
-    obs, _ = env.reset()
-    done1, done2 = False, False
     total_reward = 0
-    run_number = 100
+    run_number = 5
 
     for i in range(run_number):
+        obs, _ = env.reset()
+        done1, done2 = False, False
         while not (done1 or done2):
             action, _states = model.predict(obs, deterministic=True)
             obs, reward, done1, done2, info = env.step(action)
 
             total_reward += reward
+            env.render()
 
     print(f"Total Reward: {total_reward}")
-    env.close()
 
 
 if __name__ == "__main__":
@@ -249,11 +249,17 @@ if __name__ == "__main__":
 
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
-    model = PPO("MlpPolicy", env, verbose=1, device='cuda')  # 创建模型
+    "训练过程"
+    # model = PPO("MlpPolicy", env, verbose=1, device='cuda')  # 创建模型
+    #
+    # model.learn(total_timesteps=2000000)  # 训练模型
+    #
+    # model.save("ppo_1")
 
-    model.learn(total_timesteps=2000000)  # 训练模型
+    "加载模型测试过程"
+    model = PPO.load("ppo_1", env=env)
+    test_model(model)
 
-    model.save("ppo_1")
 
     # simulate()
     #load_and_play()
