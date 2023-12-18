@@ -1,5 +1,5 @@
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
 from gym_race.envs.pyrace_2d import PyRace2D
 from typing import Optional

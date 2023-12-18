@@ -1,9 +1,11 @@
+import sys
 import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
 
-import gym
+import gymnasium as gym
+import gym_race
 
 def simulate():
     learning_rate = get_learning_rate(0)
