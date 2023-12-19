@@ -250,14 +250,14 @@ if __name__ == "__main__":
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
     "训练过程"
-    # model = PPO("MlpPolicy", env, verbose=1, device='cuda')  # 创建模型
+    # model = PPO("MlpPolicy", env, verbose=1, learning_rate=3e-3)  # 创建模型
     #
-    # model.learn(total_timesteps=2000000)  # 训练模型
+    # model.learn(total_timesteps=400000)  # 训练模型
     #
-    # model.save("ppo_1")
+    # model.save("ppo_2")
 
     "加载模型测试过程"
-    model = PPO.load("ppo_1", env=env)
+    model = PPO.load("ppo_2", env=env)
     test_model(model)
 
 

@@ -7,7 +7,7 @@ from typing import Optional
 class RaceEnv(gym.Env):
     """ The class defines a custom environment class named
       RaceEnv that follows the OpenAI Gym interface. """
-    metadata = {'render.modes' : ['human']}
+    metadata = {'render_modes': ['human']}
     def __init__(self):
         print("init")
         self.action_space = spaces.Discrete(3)
@@ -26,7 +26,7 @@ class RaceEnv(gym.Env):
         del self.pyrace
         self.pyrace = PyRace2D(self.is_view)
         obs = self.pyrace.observe()
-        return obs, {}
+        return np.array(obs), {}
 
     def step(self, action):
         self.pyrace.action(action)
@@ -34,7 +34,7 @@ class RaceEnv(gym.Env):
         terminated = self.pyrace.is_done()
         truncated = self.pyrace.is_done()
         obs = self.pyrace.observe()
-        return obs, reward, terminated, truncated, {}
+        return np.array(obs), reward, terminated, truncated, {}
 
     def render(self, mode="human", close=False):
         if self.is_view:
