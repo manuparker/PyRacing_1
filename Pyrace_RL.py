@@ -214,7 +214,7 @@ def load_data(file):
 
 def test_model(model):
     env = gym.make("Pyrace-v0")  # 可视化只能在初始化时指定
-    env.set_view(True)
+    env.unwrapped.set_view(True)
     total_reward = 0
     run_number = 5
 
@@ -250,14 +250,14 @@ if __name__ == "__main__":
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
     "训练过程"
-    # model = PPO("MlpPolicy", env, verbose=1, learning_rate=3e-3)  # 创建模型
+    # model = PPO("MlpPolicy", env, verbose=1)  # 创建模型
     #
     # model.learn(total_timesteps=400000)  # 训练模型
     #
-    # model.save("ppo_2")
+    # model.save("ppo_3")
 
     "加载模型测试过程"
-    model = PPO.load("ppo_2", env=env)
+    model = PPO.load("ppo_3", env=env)
     test_model(model)
 
 

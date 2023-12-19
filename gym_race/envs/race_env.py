@@ -7,7 +7,7 @@ from typing import Optional
 class RaceEnv(gym.Env):
     """ The class defines a custom environment class named
       RaceEnv that follows the OpenAI Gym interface. """
-    metadata = {'render_modes': ['human']}
+    metadata = {'render_modes': ['human'], "render_fps": 50}
     def __init__(self):
         print("init")
         self.action_space = spaces.Discrete(3)
