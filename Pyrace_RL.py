@@ -222,26 +222,36 @@ def simulate():
         learning_rate = get_learning_rate(episode)
 
 
-def test_model(model):
+def test_model(model, num_episodes):
     env = gym.make("Pyrace-v0")  # 可视化只能在初始化时指定
     env.unwrapped.set_view(True)
-    total_reward = 0
-    run_number = 5
+    sum_length = 0
 
-    for i in range(run_number):
-        obs, _ = env.reset()
+    for i_episode in range(num_episodes):
+        obs, _ = env.reset(seed=0)
         done1, done2 = False, False
+        episode_len = 0
+        episode_return = 0
         while not (done1 or done2):
             action, _states = model.predict(obs, deterministic=True)
             obs, reward, done1, done2, info = env.step(action)
 
-            total_reward += reward
+            episode_return += reward
+            episode_len += 1
             env.render()
+        sum_length += episode_len
 
-    print(f"Total Reward: {total_reward}")
+        print(f"Episode {i_episode + 1}: Total Reward = {episode_return}")
+        print(f"Episode {i_episode + 1}: Total Length = {episode_len}")
+
+    average_len = int(sum_length / num_episodes)
+
+    print(f"一个episode平均使用{average_len}步到达终点")
+
 
 def MY_PPO_test(env, model_path, num_episodes):
     # 创建PPO_1_Test类的实例
+    sum_length = 0
     hidden_dim = 128
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     state_dim = env.observation_space.shape[0]
@@ -261,14 +271,22 @@ def MY_PPO_test(env, model_path, num_episodes):
         state, _ = env.reset(seed=0)
         done = False
         episode_return = 0
+        episode_len = 0
         while not done:
             action = agent.take_action(state)
             state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             episode_return += reward
+            episode_len += 1
             env.render()   # 可视化环境
+        sum_length += episode_len
 
         print(f"Episode {i_episode + 1}: Total Reward = {episode_return}")
+        print(f"Episode {i_episode + 1}: Total Length = {episode_len}")
+
+    average_len = int(sum_length/num_episodes)
+
+    print(f"一个episode平均使用{average_len}步到达终点")
 
 def MY_PPO_train(env, env_name, model_path):
     actor_lr = 1e-3
@@ -351,19 +369,19 @@ if __name__ == "__main__":
     #             learning_rate=3e-3, batch_size=256,
     #             tensorboard_log='./log/ppo_5')  # 创建模型
     #
-    # model.learn(total_timesteps=150000)  # 训练模型
+    # model.learn(total_timesteps=200000)  # 训练模型
     #
     # model.save("Model/ppo_5")
 
     "加载模型测试过程"
     model = PPO.load("Model/ppo_4", env=env)
-    test_model(model)
+    test_model(model, 10)
 
     "使用《动手学强化学习》的PPO代码进行训练"
     # MY_PPO_train(env, env_name, 'Model/my_ppo_3.pth')
 
     "使用《动手学强化学习》的PPO代码进行测试"
-    # MY_PPO_test(env, "Model/my_ppo_3.pth", 10)
+    # MY_PPO_test(env, "Model/my_ppo_2.pth", 10)
 
     # simulate()
     #load_and_play()
