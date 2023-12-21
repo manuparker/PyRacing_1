@@ -280,7 +280,7 @@ def MY_PPO_train(env, env_name, model_path):
     epochs = 10
     eps = 0.2
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    torch.manual_seed(1)
+    torch.manual_seed(0)
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     env.unwrapped.set_view(False)   # 设置训练过程小车运动可视化
@@ -297,7 +297,7 @@ def MY_PPO_train(env, env_name, model_path):
         device,
     )
 
-    return_list = train_on_policy_agent(env, agent, num_episodes, model_path)
+    return_list, len_list = train_on_policy_agent(env, agent, num_episodes, model_path)
 
     episodes_list = list(range(len(return_list)))
     plt.plot(episodes_list, return_list)
@@ -311,6 +311,19 @@ def MY_PPO_train(env, env_name, model_path):
     plt.xlabel("Episodes")
     plt.ylabel("Returns")
     plt.title("Moving_average PPO on {}".format(env_name))
+    plt.show()
+
+    plt.plot(episodes_list, len_list)
+    plt.xlabel("Episodes")
+    plt.ylabel("Length")
+    plt.title("Length on {}".format(env_name))
+    plt.show()
+
+    mv_length = moving_average(len_list, 9)
+    plt.plot(episodes_list, mv_length)
+    plt.xlabel("Episodes")
+    plt.ylabel("Length")
+    plt.title("Moving_average Length on {}".format(env_name))
     plt.show()
 
 
@@ -334,18 +347,20 @@ if __name__ == "__main__":
     q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
     "训练过程"
-    # model = PPO("MlpPolicy", env, verbose=1, learning_rate=3e-2)  # 创建模型
+    # model = PPO("MlpPolicy", env, verbose=1,
+    #             learning_rate=3e-3, batch_size=256,
+    #             tensorboard_log='./log/ppo_5')  # 创建模型
     #
-    # model.learn(total_timesteps=400000)  # 训练模型
+    # model.learn(total_timesteps=150000)  # 训练模型
     #
-    # model.save("Model/ppo_4")
+    # model.save("Model/ppo_5")
 
     "加载模型测试过程"
-    # model = PPO.load("Model/ppo_2", env=env)
-    # test_model(model)
+    model = PPO.load("Model/ppo_4", env=env)
+    test_model(model)
 
     "使用《动手学强化学习》的PPO代码进行训练"
-    MY_PPO_train(env, env_name, 'Model/my_ppo_2.pth')
+    # MY_PPO_train(env, env_name, 'Model/my_ppo_3.pth')
 
     "使用《动手学强化学习》的PPO代码进行测试"
     # MY_PPO_test(env, "Model/my_ppo_3.pth", 10)

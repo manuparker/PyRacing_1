@@ -199,9 +199,11 @@ class PPO_1:
 
 def train_on_policy_agent(env, agent, num_episodes, model_path):
     return_list = []
+    len_list = []
     for i in range(10):
         with tqdm(total=int(num_episodes / 10), desc="Iteration %d" % (i + 1)) as pbar:
             for i_episode in range(int(num_episodes / 10)):
+                episode_len = 0
                 episode_return = 0
                 transition_dict = {
                     "states": [],
@@ -210,7 +212,7 @@ def train_on_policy_agent(env, agent, num_episodes, model_path):
                     "rewards": [],
                     "dones": [],
                 }
-                state, _ = env.reset(seed=1)
+                state, _ = env.reset(seed=0)
                 done = False
                 while not done:
                     action = agent.take_action(state)
@@ -223,14 +225,17 @@ def train_on_policy_agent(env, agent, num_episodes, model_path):
                     transition_dict["dones"].append(done)
                     state = next_state
                     episode_return += reward
+                    episode_len += 1
                     # env.render()   # 设置训练过程小车运动可视化
                 return_list.append(episode_return)
+                len_list.append(episode_len)
                 agent.update(transition_dict)
                 if (i_episode + 1) % 10 == 0:
                     pbar.set_postfix(
                         {
                             "episodes": "%d" % (num_episodes / 10 * i + i_episode + 1),
                             "return": "%.3f" % np.mean(return_list[-10:]),
+                            "len": "%d" % np.mean(len_list[-10:]),
                         }
                     )
                 pbar.update(1)
@@ -244,7 +249,7 @@ def train_on_policy_agent(env, agent, num_episodes, model_path):
     # 保存这个大字典到一个文件
     torch.save(model_states, model_path)
 
-    return return_list
+    return return_list, len_list
 
 def moving_average(a, window_size):
     """使用moving_average的方法对数据进行平滑处理，a为传入的return数据列表，window_size为取平均的个数"""
