@@ -1,6 +1,69 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+from tqdm import tqdm
+
+
+class PPO_1_Test:
+    """定义PPO截断算法用于测试，只包含actor网络"""
+
+    def __init__(self, state_dim, hidden_dim, action_dim, device):
+        self.actor = PolicyNet(state_dim, hidden_dim, action_dim).to(device)
+        self.device = device
+        self.state_dim = state_dim
+
+    def take_action(self, state):
+        state = torch.tensor(state, dtype=torch.float).view(-1, self.state_dim).to(self.device)
+        probs = self.actor(state)
+        action_dist = torch.distributions.Categorical(probs)
+        action = action_dist.sample()
+        return action.item()
+
+    def load_model(self, model_path):
+        model_states = torch.load(model_path)
+        self.actor.load_state_dict(model_states['actor_state_dict'])
+        self.actor.to(self.device)
+
+
+def continue_training(env, model_path, num_episodes_to_continue):
+    actor_lr = 8e-4
+    critic_lr = 1e-2
+    num_episodes = 500
+    hidden_dim = 128
+    gamma = 0.9
+    lmbda = 0.95
+    epochs = 10
+    eps = 0.2
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    torch.manual_seed(0)
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.n
+    env.unwrapped.set_view(False)   # 设置训练过程小车运动可视化
+
+    # 加载保存的模型状态
+    saved_model_states = torch.load(model_path)
+
+    # 创建PPO_1类的实例
+    agent = PPO_1(
+        state_dim,
+        hidden_dim,
+        action_dim,
+        actor_lr,
+        critic_lr,
+        lmbda,
+        epochs,
+        eps,
+        gamma,
+        device
+    )
+
+    # 应用保存的状态到模型
+    agent.actor.load_state_dict(saved_model_states['actor_state_dict'])
+    agent.critic.load_state_dict(saved_model_states['critic_state_dict'])
+
+    # 继续训练
+    return train_on_policy_agent(env, agent, num_episodes_to_continue)
+
 
 def compute_advantage(gamma, lmbda, td_delta):
     """用来计算广义优势估计"""
@@ -13,7 +76,8 @@ def compute_advantage(gamma, lmbda, td_delta):
         advantage = gamma * lmbda * advantage + delta
         advantage_list.append(advantage)
     advantage_list.reverse()
-    return torch.tensor(advantage_list, dtype=torch.float)
+    advantage_np = np.array(advantage_list)
+    return torch.tensor(advantage_np, dtype=torch.float)
 
 
 class PolicyNet(torch.nn.Module):
@@ -38,7 +102,7 @@ class ValueNet(torch.nn.Module):
         x = F.relu(self.fc1(x))
         return self.fc2(x)
 
-class PPO:
+class PPO_1:
     """定义PPO截断算法"""
 
     def __init__(
@@ -133,3 +197,86 @@ class PPO:
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
             self.actor_optimizer.step()
+
+def train_on_policy_agent(env, agent, num_episodes):
+    return_list = []
+    for i in range(10):
+        with tqdm(total=int(num_episodes / 10), desc="Iteration %d" % (i + 1)) as pbar:
+            for i_episode in range(int(num_episodes / 10)):
+                episode_return = 0
+                transition_dict = {
+                    "states": [],
+                    "actions": [],
+                    "next_states": [],
+                    "rewards": [],
+                    "dones": [],
+                }
+                state, _ = env.reset(seed=0)
+                done = False
+                while not done:
+                    action = agent.take_action(state)
+                    next_state, reward, terminated, truncated, _ = env.step(action)
+                    done = terminated or truncated
+                    transition_dict["states"].append(state)
+                    transition_dict["actions"].append(action)
+                    transition_dict["next_states"].append(next_state)
+                    transition_dict["rewards"].append(reward)
+                    transition_dict["dones"].append(done)
+                    state = next_state
+                    episode_return += reward
+                    # env.render()   # 设置训练过程小车运动可视化
+                return_list.append(episode_return)
+                agent.update(transition_dict)
+                if (i_episode + 1) % 10 == 0:
+                    pbar.set_postfix(
+                        {
+                            "episodes": "%d" % (num_episodes / 10 * i + i_episode + 1),
+                            "return": "%.3f" % np.mean(return_list[-10:]),
+                        }
+                    )
+                pbar.update(1)
+
+    # 创建包含多个状态字典的大字典
+    model_states = {
+        "actor_state_dict": agent.actor.state_dict(),
+        "critic_state_dict": agent.critic.state_dict(),
+    }
+    
+    # 保存这个大字典到一个文件
+    model_path = "ppo_combined_model.pth"
+    torch.save(model_states, model_path)
+
+    return return_list
+
+def moving_average(a, window_size):
+    """使用moving_average的方法对数据进行平滑处理，a为传入的return数据列表，window_size为取平均的个数"""
+    """以window_size=9为例，该平均算法的逻辑是，每个位置，取自己和前面4个数据以及后面4个数据共9个数据进行平均操作"""
+    """针对前4个数据与后4个数据，该算法做特殊处理"""
+    """第一个数据：直接用其本身"""
+    """第二个数据：用前3个数据之和除以3"""
+    """第三个数据：用前5个数据之和除以5"""
+    """第四个数据：用前7个数据之和除以7"""
+    """倒数第一个数据：直接用其本身"""
+    """倒数第二个数据：用后3个数据之和除以3"""
+    """倒数第三个数据：用后5个数据之和除以5"""
+    """第四个数据：用后7个数据之和除以7"""
+    cumulative_sum = np.cumsum(np.insert(a, 0, 0))  # 在a前插入0之后，算每个位置之前的所有元素的和
+    # 加入0的作用是能够得到第1个元素到第9个元素的累积和
+    middle = (
+        cumulative_sum[window_size:] - cumulative_sum[:-window_size]
+    ) / window_size  # 利用累计和切片：（第9个元素到最后 - 第1个元素到倒数第10个元素）/ 9 = 第5个位置到倒数第5个位置的均值
+    r = np.arange(1, window_size - 1, 2)  # 得到r = [1 ,3, 5, 7]
+    begin = (
+        np.cumsum(a[: window_size - 1])[::2] / r
+    )  # 得到前8个元素的和并分别取1、3、5、7位置的和除以r作为前4个位置的均值
+    end = (np.cumsum(a[:-window_size:-1])[::2] / r)[
+        ::-1
+    ]  # 得到后8个元素的和并分别取最后1、3、5、7位置的和除以r作为后4个位置的均值
+    if window_size % 2 == 0:  # 该条件补充了window_size为偶数的情况，若不加该语句，则偶数时平滑后的输出比原数组元素少1
+        end = np.insert(
+            end,
+            -int((window_size / 2)),
+            (cumulative_sum[-1] - cumulative_sum[-window_size]) / (r[-1] + 2),
+        )
+    return np.concatenate((begin, middle, end))  # 将其拼到一起，则为平滑后的数据
+

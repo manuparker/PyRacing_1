@@ -145,6 +145,8 @@ class PyRace2D:
         self.game_speed = 60
         self.is_render = is_render
         self.mode = 0
+        self.episode_step = 0   # 记录每个episode小车走的步数
+        self.finish_by_maxstep = False   # 记录是否在到达终点前因为太慢而停止
 
     def action(self, action):
         if action == 0:
@@ -162,19 +164,35 @@ class PyRace2D:
         for d in range(-90, 120, 45):
             self.car.check_radar(d)
 
+        self.episode_step += 1   # 每采取一个行动，就+1表示走过了一个时间步
+        if self.episode_step == 2000:
+            self.finish_by_maxstep = True
+
     def evaluate(self):
-        reward = 0
+        reward = self.car.speed
         """
         if self.car.check_flag:
             self.car.check_flag = False
             reward = 2000 - self.car.time_spent
             self.car.time_spent = 0
         """
-        if not self.car.is_alive:
-            reward = -10000 + self.car.distance
 
+        # if self.car.is_alive:
+        #     reward = self.car.distance
+
+        if (not self.car.is_alive) or self.finish_by_maxstep:
+            reward = -8000
         elif self.car.goal:
             reward = 10000
+
+        """
+        调试reward代码
+        """
+        # print('reward = {0}, car.is_alive = {1}, distance = {2}, '
+        #       'finish_by_maxstep = {3}, episode_step = {4} '.format(
+        #     reward, self.car.is_alive, self.car.distance,
+        #     self.finish_by_maxstep, self.episode_step))
+
         return reward
 
     def is_done(self):
