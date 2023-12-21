@@ -25,10 +25,9 @@ class PPO_1_Test:
         self.actor.to(self.device)
 
 
-def continue_training(env, model_path, num_episodes_to_continue):
+def continue_training(env, model_path, num_episodes_to_continue, new_model_path):
     actor_lr = 8e-4
     critic_lr = 1e-2
-    num_episodes = 500
     hidden_dim = 128
     gamma = 0.9
     lmbda = 0.95
@@ -62,7 +61,7 @@ def continue_training(env, model_path, num_episodes_to_continue):
     agent.critic.load_state_dict(saved_model_states['critic_state_dict'])
 
     # 继续训练
-    return train_on_policy_agent(env, agent, num_episodes_to_continue)
+    return train_on_policy_agent(env, agent, num_episodes_to_continue, new_model_path)
 
 
 def compute_advantage(gamma, lmbda, td_delta):
@@ -198,7 +197,7 @@ class PPO_1:
             actor_loss.backward()
             self.actor_optimizer.step()
 
-def train_on_policy_agent(env, agent, num_episodes):
+def train_on_policy_agent(env, agent, num_episodes, model_path):
     return_list = []
     for i in range(10):
         with tqdm(total=int(num_episodes / 10), desc="Iteration %d" % (i + 1)) as pbar:
@@ -211,7 +210,7 @@ def train_on_policy_agent(env, agent, num_episodes):
                     "rewards": [],
                     "dones": [],
                 }
-                state, _ = env.reset(seed=0)
+                state, _ = env.reset(seed=1)
                 done = False
                 while not done:
                     action = agent.take_action(state)
@@ -243,7 +242,6 @@ def train_on_policy_agent(env, agent, num_episodes):
     }
     
     # 保存这个大字典到一个文件
-    model_path = "ppo_combined_model.pth"
     torch.save(model_states, model_path)
 
     return return_list

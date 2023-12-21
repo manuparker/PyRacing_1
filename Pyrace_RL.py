@@ -270,17 +270,17 @@ def MY_PPO_test(env, model_path, num_episodes):
 
         print(f"Episode {i_episode + 1}: Total Reward = {episode_return}")
 
-def MY_PPO_train(env, env_name):
-    actor_lr = 8e-4
+def MY_PPO_train(env, env_name, model_path):
+    actor_lr = 1e-3
     critic_lr = 1e-2
-    num_episodes = 500
+    num_episodes = 200
     hidden_dim = 128
     gamma = 0.9
     lmbda = 0.95
     epochs = 10
     eps = 0.2
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    torch.manual_seed(0)
+    torch.manual_seed(1)
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     env.unwrapped.set_view(False)   # 设置训练过程小车运动可视化
@@ -297,7 +297,7 @@ def MY_PPO_train(env, env_name):
         device,
     )
 
-    return_list = train_on_policy_agent(env, agent, num_episodes)
+    return_list = train_on_policy_agent(env, agent, num_episodes, model_path)
 
     episodes_list = list(range(len(return_list)))
     plt.plot(episodes_list, return_list)
@@ -338,17 +338,17 @@ if __name__ == "__main__":
     #
     # model.learn(total_timesteps=400000)  # 训练模型
     #
-    # model.save("ppo_4")
+    # model.save("Model/ppo_4")
 
     "加载模型测试过程"
-    # model = PPO.load("ppo_2", env=env)
+    # model = PPO.load("Model/ppo_2", env=env)
     # test_model(model)
 
     "使用《动手学强化学习》的PPO代码进行训练"
-    # MY_PPO_train(env, env_name)
+    MY_PPO_train(env, env_name, 'Model/my_ppo_2.pth')
 
     "使用《动手学强化学习》的PPO代码进行测试"
-    MY_PPO_test(env, "ppo_combined_model.pth", 10)
+    # MY_PPO_test(env, "Model/my_ppo_3.pth", 10)
 
     # simulate()
     #load_and_play()
