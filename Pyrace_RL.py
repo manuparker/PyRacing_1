@@ -12,6 +12,7 @@ from PPO_Algorithm_File import PPO_1
 from PPO_Algorithm_File import train_on_policy_agent
 from PPO_Algorithm_File import moving_average
 from PPO_Algorithm_File import PPO_1_Test
+from PPO_Algorithm_File import continue_training
 
 from stable_baselines3 import PPO
 import torch
@@ -374,14 +375,17 @@ if __name__ == "__main__":
     # model.save("Model/ppo_5")
 
     "加载模型测试过程"
-    model = PPO.load("Model/ppo_4", env=env)
-    test_model(model, 10)
+    # model = PPO.load("Model/ppo_4", env=env)
+    # test_model(model, 10)
 
     "使用《动手学强化学习》的PPO代码进行训练"
     # MY_PPO_train(env, env_name, 'Model/my_ppo_3.pth')
 
     "使用《动手学强化学习》的PPO代码进行测试"
-    # MY_PPO_test(env, "Model/my_ppo_2.pth", 10)
+    MY_PPO_test(env, "Model/my_ppo_3.pth", 10)
+
+    "使用《动手学强化学习》的PPO代码进行继续训练"
+    # continue_training(env, "Model/my_ppo_3.pth", 20, 'Model/my_ppo_4.pth')
 
     # simulate()
     #load_and_play()

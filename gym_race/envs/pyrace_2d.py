@@ -170,20 +170,20 @@ class PyRace2D:
 
     def evaluate(self):
         reward = self.car.speed
-        """
+
         if self.car.check_flag:
             self.car.check_flag = False
-            reward = 2000 - self.car.time_spent
+            reward += 2000 - self.car.time_spent
             self.car.time_spent = 0
-        """
+
 
         # if self.car.is_alive:
         #     reward = self.car.distance
 
         if (not self.car.is_alive) or self.finish_by_maxstep:
-            reward = -8000
-        elif self.car.goal:
-            reward = 10000
+            reward = -10000
+        # elif self.car.goal:
+        #     reward = 10000
 
         """
         调试reward代码
